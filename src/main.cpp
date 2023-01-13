@@ -3,12 +3,18 @@
 #include "Chip8.hpp"
 
 void printImage(const uint32_t *image) {
-	std::string tmp("");
-	for (int i = 0; i < 32*64; i++) {
-		if (image[i] > 0) tmp = tmp.append(1, '#');
-		else tmp = tmp.append(1, ' ');
-		if (i % 64 == 0) tmp = tmp.append(1, '\n');
+	std::string tmp("##################################################################\n");
+	for (int row = 0; row < 32; ++row) {
+		for (int col = 0; col < 66; ++col) {
+			if (col == 0 || col == 65) tmp = tmp.append(1, '#');
+			else {
+				if (image[64 * row + (col - 1)] > 0) tmp = tmp.append(1, '#');
+				else tmp = tmp.append(1, ' ');
+			}
+		}
+		tmp.append(1, '\n');
 	}
+	tmp = tmp.append("##################################################################\n");
 	std::cout << tmp << std::endl;
 }
 
