@@ -1,30 +1,22 @@
-#include <iostream>
-#include <string>
 #include "Chip8.hpp"
-
-void printImage(const uint32_t *image) {
-	std::string tmp("##################################################################\n");
-	for (int row = 0; row < 32; ++row) {
-		for (int col = 0; col < 66; ++col) {
-			if (col == 0 || col == 65) tmp = tmp.append(1, '#');
-			else {
-				if (image[64 * row + (col - 1)] > 0) tmp = tmp.append(1, '#');
-				else tmp = tmp.append(1, ' ');
-			}
-		}
-		tmp.append(1, '\n');
-	}
-	tmp = tmp.append("##################################################################\n");
-	std::cout << tmp << std::endl;
-}
+#include "Emuwindow.hpp"
+#include <iostream>
 
 int main(int argc, char **argv) {
     Chip8 chip8;
-    if (argc == 2) chip8.LoadRom(argv[1]);
-    while (true) {
-		chip8.Cycle();
-		printImage(chip8.display);
-		usleep(1000000/60);
+	Emuwindow *window;
+	if (argc == 3) window = new Emuwindow(atoi(argv[1]));
+	else window = new Emuwindow(10);
+
+	if (argc >= 2 && argc <= 3) {
+		if (argc == 2) chip8.LoadRom(argv[1]);
+		else chip8.LoadRom(argv[2]);
+		while (true) {
+			window->keyHandle(&chip8.keypad);
+			chip8.Cycle();
+			window->draw(chip8.display);
+			usleep((1000000 / 60) / 2);
+		}
 	}
     return 0;
 }

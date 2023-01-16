@@ -73,7 +73,7 @@ private:
 	Chip8Func tableF[0x65 + 1];
 
 public:
-	uint8_t keypad[16];
+	uint8_t *keypad;
 	uint32_t display[64 * 32];
 
 	Chip8();

@@ -4,8 +4,8 @@ Chip8::Chip8() : indexRegister(0), programCounter(0x200), stackPointer(0), delay
 	memset(memory, 0, sizeof(uint8_t) * 4096);
 	memset(registers, 0, sizeof(uint8_t) * 16);
 	memset(stack, 0, sizeof(uint16_t) * 16);
-	memset(keypad, 0, sizeof(uint8_t) * 16);
 	memset(display, 0, sizeof(uint32_t) * 64 * 32);
+	keypad = new uint8_t[16];
 	SetTables();
 	srand(time(NULL));
 	LoadFont();
@@ -84,7 +84,7 @@ void Chip8::SetTables() {
 	tableF[0x65] = &Chip8::OP_Fx65;
 }
 
-Chip8::~Chip8() {}
+Chip8::~Chip8() {delete [] keypad;}
 
 void Chip8::LoadRom(const char *fileName) {
 	FILE *rom = fopen(fileName, "rb");

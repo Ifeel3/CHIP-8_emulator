@@ -1,5 +1,6 @@
 NAME	= CHIP8Emu
 SRC		= src/Chip8.cpp \
+		src/Emuwindow.cpp \
 		src/main.cpp
 INCLUDES= includes/
 CXX		= clang++
@@ -14,7 +15,7 @@ OBJ		= $(SRC:%.cpp=%.o)
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CXX) $(OBJ) -o $@
+	$(CXX) $(OBJ) -lX11 -o $@
 
 clean:
 	rm -f $(OBJ)
