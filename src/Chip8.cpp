@@ -1,6 +1,7 @@
 #include "Chip8.hpp"
 
-Chip8::Chip8() : indexRegister(0), programCounter(0x200), stackPointer(0), delayTimer(0), soundTimer(0), opcode(0) {
+Chip8::Chip8() : indexRegister(0), programCounter(0x200), stackPointer(0), delayTimer(0), soundTimer(0) {
+	opcode.code = 0;
 	memset(memory, 0, sizeof(uint8_t) * 4096);
 	memset(registers, 0, sizeof(uint8_t) * 16);
 	memset(stack, 0, sizeof(uint16_t) * 16);
@@ -12,19 +13,19 @@ Chip8::Chip8() : indexRegister(0), programCounter(0x200), stackPointer(0), delay
 }
 
 void Chip8::Table0() {
-	((*this).*(table0[opcode & 0x000F]))();
+	((*this).*(table0[opcode.c4]))();
 }
 
 void Chip8::Table8() {
-	((*this).*(table8[opcode & 0x000F]))();
+	((*this).*(table8[opcode.c4]))();
 }
 
 void Chip8::TableE() {
-	((*this).*(tableE[opcode & 0x000F]))();
+	((*this).*(tableE[opcode.c4]))();
 }
 
 void Chip8::TableF() {
-	((*this).*(tableF[opcode & 0x00FF]))();
+	((*this).*(tableF[opcode.code & 0x00FF]))();
 }
 
 void Chip8::SetTables() {
@@ -130,100 +131,100 @@ void Chip8::OP_00EE() {
 }
 
 void Chip8::OP_1nnn() {
-	programCounter = opcode & 0x0FFF;
+	programCounter = opcode.code & 0x0FFF;
 }
 
 void Chip8::OP_2nnn() {
 	stack[stackPointer] = programCounter;
 	++stackPointer;
-	programCounter = opcode & 0x0FFF;
+	programCounter = opcode.code & 0x0FFF;
 }
 
 void Chip8::OP_3xkk() {
-	if (registers[(opcode & 0x0F00) >> 8] == (opcode & 0xFF)) programCounter += 2;
+	if (registers[opcode.c2] == (opcode.code & 0xFF)) programCounter += 2;
 }
 
 void Chip8::OP_4xkk() {
-	if (registers[(opcode & 0x0F00) >> 8] != (opcode & 0xFF)) programCounter += 2;
+	if (registers[opcode.c2] != (opcode.code & 0xFF)) programCounter += 2;
 }
 
 void Chip8::OP_5xy0() {
-	if (registers[(opcode & 0x0F00) >> 8] == registers[(opcode & 0x00F0) >> 4]) programCounter += 2;
+	if (registers[opcode.c2] == registers[(opcode.code & 0x00F0) >> 4]) programCounter += 2;
 }
 
 void Chip8::OP_6xkk() {
-	registers[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
+	registers[opcode.c2] = opcode.code & 0x00FF;
 }
 
 void Chip8::OP_7xkk() {
-	registers[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
+	registers[opcode.c2] += opcode.code & 0x00FF;
 }
 
 void Chip8::OP_8xy0() {
-	registers[(opcode & 0x0F00) >> 8] = registers[(opcode & 0x00F0) >> 4];
+	registers[opcode.c2] = registers[opcode.c3];
 }
 
 void Chip8::OP_8xy1() {
-	registers[(opcode & 0x0F00) >> 8] |= registers[(opcode & 0x00F0) >> 4];
+	registers[opcode.c2] |= registers[opcode.c3];
 }
 
 void Chip8::OP_8xy2() {
-	registers[(opcode & 0x0F00) >> 8] &= registers[(opcode & 0x00F0) >> 4];
+	registers[opcode.c2] &= registers[opcode.c3];
 }
 
 void Chip8::OP_8xy3() {
-	registers[(opcode & 0x0F00) >> 8] ^= registers[(opcode & 0x00F0) >> 4];
+	registers[opcode.c2] ^= registers[opcode.c3];
 }
 
 void Chip8::OP_8xy4() {
-	uint16_t sum = registers[(opcode & 0x0F00) >> 8] + registers[(opcode & 0x00F0) >> 4];
+	uint16_t sum = registers[opcode.c2] + registers[opcode.c3];
 	if (sum > 255) registers[0xF] = 1;
 	else registers[0xF] = 0;
-	registers[(opcode & 0x0F00) >> 8] = sum & 0x00FF;
+	registers[opcode.c2] = sum & 0x00FF;
 }
 
 void Chip8::OP_8xy5() {
-	if (registers[(opcode & 0x0F00) >> 8] > registers[(opcode & 0x00F0) >> 4]) registers[0xF] = 1;
+	if (registers[opcode.c2] > registers[opcode.c3]) registers[0xF] = 1;
 	else registers[0xF] = 0;
-	registers[(opcode & 0x0F00) >> 8] -= registers[(opcode & 0x00F0) >> 4];
+	registers[opcode.c2] -= registers[opcode.c3];
 }
 
 void Chip8::OP_8xy6() {
-	registers[0xF] = registers[(opcode & 0x0F00) >> 8] & 0b1;
-	registers[(opcode & 0x0F00) >> 8] >>= 1;
+	registers[0xF] = registers[opcode.c2] & 0b1;
+	registers[opcode.c2] >>= 1;
 }
 
 void Chip8::OP_8xy7() {
-	if (registers[(opcode & 0x00F0) >> 4] > registers[(opcode & 0x0F00) >> 8]) registers[0xF] = 1;
+	if (registers[opcode.c3] > registers[opcode.c2]) registers[0xF] = 1;
 	else registers[0xF] = 0;
-	registers[(opcode & 0x0F00) >> 8] = registers[(opcode & 0x00F0) >> 4] - registers[(opcode & 0x0F00) >> 8];
+	registers[opcode.c2] = registers[opcode.c3] - registers[opcode.c2];
 }
 
 void Chip8::OP_8xyE() {
-	registers[0xF] = registers[(opcode & 0x0F00) >> 8] & 0b1;
-	registers[(opcode & 0x0F00) >> 8] <<= 1;
+	registers[0xF] = registers[opcode.c2] & 0b1;
+	registers[opcode.c2] <<= 1;
 }
 
 void Chip8::OP_9xy0() {
-	if (registers[(opcode & 0x0F00) >> 8] != registers[(opcode & 0x00F0) >> 4]) programCounter += 2;
+	if (registers[opcode.c2] != registers[opcode.c3]) programCounter += 2;
 }
 
 void Chip8::OP_Annn() {
-	indexRegister = opcode & 0x0FFF;
+	indexRegister = opcode.code & 0x0FFF;
 }
 
 void Chip8::OP_Bnnn() {
-	programCounter = registers[0] + (opcode & 0x0FFF);
+	programCounter = registers[0] + (opcode.code & 0x0FFF);
 }
 
 void Chip8::OP_Cxkk() {
-	registers[(opcode & 0x0F00) >> 8] = Random() & (opcode & 0x00FF);
+	registers[opcode.c2] = Random() & (opcode.code & 0x00FF);
 }
 
 void Chip8::OP_Dxyn() {
-	uint8_t Vx = (opcode & 0x0F00) >> 8;
-	uint8_t Vy = (opcode & 0x00F0) >> 4;
-	uint8_t height = opcode & 0x000F;
+	uint8_t Vx = opcode.c2;
+	uint8_t Vy = opcode.c3;
+	uint8_t height = opcode.c4;
 
 	// Wrap if going beyond screen boundaries
 	uint8_t xPos = registers[Vx] % 64;
@@ -257,55 +258,55 @@ void Chip8::OP_Dxyn() {
 }
 
 void Chip8::OP_Ex9E() {
-	if (keypad[registers[(opcode & 0x0F00) >> 8]]) programCounter += 2;
+	if (keypad[registers[opcode.c2]]) programCounter += 2;
 }
 
 void Chip8::OP_ExA1() {
-	if (!keypad[registers[(opcode & 0x0F00) >> 8]]) programCounter += 2;
+	if (!keypad[registers[opcode.c2]]) programCounter += 2;
 }
 
 void Chip8::OP_Fx07() {
-	registers[(opcode & 0x0F00) >> 8] = delayTimer;
+	registers[opcode.c2] = delayTimer;
 }
 
 void Chip8::OP_Fx0A() {
-	if (keypad[0x0]) registers[(opcode & 0x0F00) >> 8] = 0x0;
-	else if (keypad[0x1]) registers[(opcode & 0x0F00) >> 8] = 0x1;
-	else if (keypad[0x2]) registers[(opcode & 0x0F00) >> 8] = 0x2;
-	else if (keypad[0x3]) registers[(opcode & 0x0F00) >> 8] = 0x3;
-	else if (keypad[0x4]) registers[(opcode & 0x0F00) >> 8] = 0x4;
-	else if (keypad[0x5]) registers[(opcode & 0x0F00) >> 8] = 0x5;
-	else if (keypad[0x6]) registers[(opcode & 0x0F00) >> 8] = 0x6;
-	else if (keypad[0x7]) registers[(opcode & 0x0F00) >> 8] = 0x7;
-	else if (keypad[0x8]) registers[(opcode & 0x0F00) >> 8] = 0x8;
-	else if (keypad[0x9]) registers[(opcode & 0x0F00) >> 8] = 0x9;
-	else if (keypad[0xA]) registers[(opcode & 0x0F00) >> 8] = 0xA;
-	else if (keypad[0xB]) registers[(opcode & 0x0F00) >> 8] = 0xB;
-	else if (keypad[0xC]) registers[(opcode & 0x0F00) >> 8] = 0xC;
-	else if (keypad[0xD]) registers[(opcode & 0x0F00) >> 8] = 0xD;
-	else if (keypad[0xE]) registers[(opcode & 0x0F00) >> 8] = 0xE;
-	else if (keypad[0xF]) registers[(opcode & 0x0F00) >> 8] = 0xF;
+	if (keypad[0x0]) registers[opcode.c2] = 0x0;
+	else if (keypad[0x1]) registers[opcode.c2] = 0x1;
+	else if (keypad[0x2]) registers[opcode.c2] = 0x2;
+	else if (keypad[0x3]) registers[opcode.c2] = 0x3;
+	else if (keypad[0x4]) registers[opcode.c2] = 0x4;
+	else if (keypad[0x5]) registers[opcode.c2] = 0x5;
+	else if (keypad[0x6]) registers[opcode.c2] = 0x6;
+	else if (keypad[0x7]) registers[opcode.c2] = 0x7;
+	else if (keypad[0x8]) registers[opcode.c2] = 0x8;
+	else if (keypad[0x9]) registers[opcode.c2] = 0x9;
+	else if (keypad[0xA]) registers[opcode.c2] = 0xA;
+	else if (keypad[0xB]) registers[opcode.c2] = 0xB;
+	else if (keypad[0xC]) registers[opcode.c2] = 0xC;
+	else if (keypad[0xD]) registers[opcode.c2] = 0xD;
+	else if (keypad[0xE]) registers[opcode.c2] = 0xE;
+	else if (keypad[0xF]) registers[opcode.c2] = 0xF;
 	else programCounter -= 2;
 }
 
 void Chip8::OP_Fx15() {
-	delayTimer = registers[(opcode & 0x0F00) >> 8];
+	delayTimer = registers[opcode.c2];
 }
 
 void Chip8::OP_Fx18() {
-	soundTimer = registers[(opcode & 0x0F00) >> 8];
+	soundTimer = registers[opcode.c2];
 }
 
 void Chip8::OP_Fx1E() {
-	indexRegister += registers[(opcode & 0x0F00) >> 8];
+	indexRegister += registers[opcode.c2];
 }
 
 void Chip8::OP_Fx29() {
-	indexRegister = 0x50 + (5 * registers[(opcode & 0x0F00) >> 8]);
+	indexRegister = 0x50 + (5 * registers[opcode.c2]);
 }
 
 void Chip8::OP_Fx33() {
-	uint8_t number = registers[(opcode & 0x0F00) >> 8];
+	uint8_t number = registers[opcode.c2];
 
 	memory[indexRegister + 2] = number % 10;
 	number /= 10;
@@ -317,13 +318,13 @@ void Chip8::OP_Fx33() {
 }
 
 void Chip8::OP_Fx55() {
-	for (uint8_t i = 0; i <= (uint8_t)((opcode & 0x0F00) >> 8); ++i) {
+	for (uint8_t i = 0; i <= (uint8_t)(opcode.c2); ++i) {
 		memory[indexRegister + i] = registers[i];
 	}
 }
 
 void Chip8::OP_Fx65() {
-	for (uint8_t i = 0; i <= (uint8_t)((opcode & 0x0F00) >> 8); ++i) {
+	for (uint8_t i = 0; i <= (uint8_t)(opcode.c2); ++i) {
 		registers[i] = memory[indexRegister + i];
 	}
 }
@@ -335,13 +336,13 @@ void Chip8::OP_NULL() {
 void Chip8::Cycle()
 {
 	// Fetch
-	opcode = (memory[programCounter] << 8) | memory[programCounter + 1];
+	opcode.code = (memory[programCounter] << 8) | memory[programCounter + 1];
 
 	// Increment the PC before we execute anything
 	programCounter += 2;
 
 	// Decode and Execute
-	((*this).*(table[(opcode & 0xF000) >> 12]))();
+	((*this).*(table[opcode.c1]))();
 
 	// Decrement the delay timer if it's been set
 	if (delayTimer > 0) {

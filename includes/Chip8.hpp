@@ -9,6 +9,17 @@
 # include <unistd.h>
 
 class Chip8 {
+
+	typedef union {
+		uint16_t code;
+		struct {
+			unsigned char c4 : 4;
+			unsigned char c3 : 4;
+			unsigned char c2 : 4;
+			unsigned char c1 : 4;
+		};
+	} Opcode_t;
+
 private:
     uint8_t registers[16];
     uint8_t memory[4096];
@@ -18,7 +29,7 @@ private:
     uint8_t stackPointer;
     uint8_t delayTimer;
     uint8_t soundTimer;
-    uint16_t opcode;
+    Opcode_t opcode;
 
 	void LoadFont();
 	uint8_t Random();

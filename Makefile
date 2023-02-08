@@ -5,22 +5,25 @@ SRC		= src/Chip8.cpp \
 INCLUDES= includes/
 CXX		= clang++
 CXXFLAGS= -std=c++98 -Wall -Werror -Wextra
-OBJ		= $(SRC:%.cpp=%.o)
+OBJ		= $(SRC:src/%.cpp=obj/%.o)
 
 .PHONY: all re clean flclean
 
-%.o: %.cpp
+obj/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDES) -c $? -o $@
 
 all: $(NAME)
 
-$(NAME): $(OBJ)
+obj:
+	@mkdir obj
+
+$(NAME): obj $(OBJ)
 	$(CXX) $(OBJ) -lX11 -o $@
 
 clean:
-	rm -f $(OBJ)
+	@rm -rf obj
 
 fclean: clean
-	rm -f $(NAME)
+	@rm -f $(NAME)
 
 re: fclean all
